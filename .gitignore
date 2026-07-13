@@ -42,6 +42,10 @@ Thumbs.db
 
 # Local runtime data
 src/db.sqlite3
+src/*.sqlite3.bak_*
+src/*.sqlite3.bak
+src/*.sqlite3.backup
+src/*.sqlite3.old
 src/media/
 src/staticfiles/
 

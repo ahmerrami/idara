@@ -22,6 +22,12 @@ ALLOWED_HOSTS = [
 if not ALLOWED_HOSTS:
     raise ImproperlyConfigured('DJANGO_ALLOWED_HOSTS is required in production.')
 
+CORS_ALLOWED_ORIGINS = [
+    item.strip()
+    for item in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
+    if item.strip()
+]
+
 DATABASE_URL = os.getenv('DATABASE_URL')
 if not DATABASE_URL:
     raise ImproperlyConfigured('DATABASE_URL is required in production.')
@@ -43,3 +49,12 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = (
 SECURE_HSTS_PRELOAD = os.getenv('DJANGO_SECURE_HSTS_PRELOAD', 'true').lower() == 'true'
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
+
+CSRF_TRUSTED_ORIGINS = [
+    item.strip()
+    for item in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',')
+    if item.strip()
+]
+
+MEDIA_ROOT = os.getenv('MEDIA_ROOT', str(BASE_DIR / 'media'))
+STATIC_ROOT = os.getenv('STATIC_ROOT', str(BASE_DIR / 'staticfiles'))

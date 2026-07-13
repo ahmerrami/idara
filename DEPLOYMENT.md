@@ -60,6 +60,48 @@ The `deploy-prod` command will:
 - pull the `web` image from Docker Hub
 - start containers, network, and database with Docker Compose
 
+## Run On Another Local Machine (using Docker image)
+
+Use this when you want to run the app on a second machine in local mode (same LAN or standalone), by pulling an image from Docker Hub.
+
+1) On your current machine (build and push image):
+
+```bash
+bash scripts/deploy-manual-prod.sh build-push .env.localtest
+```
+
+2) On the other machine:
+
+```bash
+git clone <your-repo-url> idara
+cd idara
+cp .env.prod.example .env.prod
+```
+
+3) Edit `.env.prod` on the other machine:
+- `DOCKERHUB_USERNAME` and `TAG`
+- `DJANGO_SECRET_KEY`
+- `DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1`
+- `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`
+- `DATABASE_URL` (must match POSTGRES_* values)
+- `DEPLOY_PATH` (example: `/opt/idara`)
+
+4) Pull and run:
+
+```bash
+bash scripts/deploy-manual-prod.sh deploy-prod .env.prod
+```
+
+5) Test in browser on that machine:
+
+```text
+http://localhost:8000
+```
+
+Notes:
+- Data persistence is kept for DB (external Docker volume `POSTGRES_VOLUME_NAME`) and media (`DEPLOY_PATH/media`).
+- For local tests without HTTPS, keep `DJANGO_SECURE_SSL_REDIRECT=false` in `.env.prod`.
+
 ## 1) Build the production image
 
 ```bash

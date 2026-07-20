@@ -7,6 +7,7 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 COMPOSE_FILE="docker-compose.prod.yml"
 COMPOSE_OVERRIDE_FILE="docker-compose.prod.override.yml"
+COMPOSE_CMD=()
 
 usage() {
     cat << 'EOF'
@@ -30,6 +31,25 @@ require_cmd() {
         echo "Required command not found: $cmd"
         exit 1
     fi
+}
+
+setup_compose_cmd() {
+    if docker compose version >/dev/null 2>&1; then
+        COMPOSE_CMD=(docker compose)
+        return
+    fi
+
+    if command -v docker-compose >/dev/null 2>&1; then
+        COMPOSE_CMD=(docker-compose)
+        return
+    fi
+
+    echo "Docker Compose is not available. Install the 'docker compose' plugin or 'docker-compose'."
+    exit 1
+}
+
+is_legacy_compose_v1() {
+    [ "${COMPOSE_CMD[0]:-}" = "docker-compose" ]
 }
 
 load_env_file() {
@@ -128,6 +148,7 @@ deploy_on_production() {
     local env_file="$1"
 
     require_cmd docker
+    setup_compose_cmd
     require_vars \
         DOCKERHUB_USERNAME TAG DEPLOY_PATH \
         DJANGO_SECRET_KEY DJANGO_ALLOWED_HOSTS \
@@ -156,13 +177,18 @@ deploy_on_production() {
     ensure_postgres_volume
 
     echo "Pulling image from Docker Hub..."
-    docker compose -f "$COMPOSE_FILE" -f "$COMPOSE_OVERRIDE_FILE" --env-file .env.prod pull web
+    "${COMPOSE_CMD[@]}" -f "$COMPOSE_FILE" -f "$COMPOSE_OVERRIDE_FILE" --env-file .env.prod pull web
+
+    if is_legacy_compose_v1; then
+        echo "Removing existing web container to avoid docker-compose v1 recreate bug..."
+        "${COMPOSE_CMD[@]}" -f "$COMPOSE_FILE" -f "$COMPOSE_OVERRIDE_FILE" --env-file .env.prod rm -fsv web || true
+    fi
 
     echo "Starting production stack..."
-    docker compose -f "$COMPOSE_FILE" -f "$COMPOSE_OVERRIDE_FILE" --env-file .env.prod up -d --remove-orphans
+    "${COMPOSE_CMD[@]}" -f "$COMPOSE_FILE" -f "$COMPOSE_OVERRIDE_FILE" --env-file .env.prod up -d --remove-orphans
 
     echo "Deployment status:"
-    docker compose -f "$COMPOSE_FILE" -f "$COMPOSE_OVERRIDE_FILE" --env-file .env.prod ps
+    "${COMPOSE_CMD[@]}" -f "$COMPOSE_FILE" -f "$COMPOSE_OVERRIDE_FILE" --env-file .env.prod ps
 
     echo "Production deployment finished."
 }

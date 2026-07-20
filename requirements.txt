@@ -22,3 +22,4 @@ defusedxml>=0.7,<1.0
 PyYAML>=6.0,<7.0
 requests>=2.32,<3.0
 tablib[xlsx,ods]>=3.7,<4.0
+whitenoise>=6.0,<7.0
